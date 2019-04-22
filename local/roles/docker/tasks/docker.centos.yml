@@ -1,11 +1,10 @@
 - name: Install docker dependencies
   yum:
-    name: "{{ item }}"
+    name:
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2
     update_cache: yes
-  with_items:
-    - yum-utils
-    - device-mapper-persistent-data
-    - lvm2
   become: yes
 
 - name: Add docker yum repository
@@ -17,12 +16,10 @@
 
 - name: Install docker ce
   yum:
-    name: "{{ item }}"
+    name:
+      - "docker-ce-{{ docker_version }}.*"
+      - containerd.io
     update_cache: yes
-  with_items:
-    - "docker-ce-{{ docker_version }}.*"
-    - "docker-ce-cli-{{ docker_version }}.*"
-    - containerd.io
   become: yes
 
 - name: Add user to docker group
@@ -38,3 +35,4 @@
     state: restarted
     daemon_reload: yes
     enabled: yes
+  become: yes

@@ -1,0 +1,29 @@
+- name: Check container setting
+  shell: "docker exec {{ container }} test -e /etc/sudoers.d/{{ sudo_user }}"
+  with_items: "{{ containers.value }}"
+  loop_control:
+    loop_var: container
+  register: check_container_settings
+  changed_when: False
+  failed_when: False
+
+- name: Add users
+  shell: "docker exec {{ container.1 }} bash -c 'useradd {{ sudo_user }} && useradd {{ user }}'"
+  when: check_container_settings.results[container.0].rc != 0
+  with_indexed_items: "{{ containers.value }}"
+  loop_control:
+    loop_var: container
+
+- name: Copy settings
+  shell: "docker cp tmp/.ssh {{ container.1 }}:/home/{{ sudo_user }}/ && docker cp tmp/docker.hosts {{ container.1 }}:/tmp/docker.hosts"
+  when: check_container_settings.results[container.0].rc != 0
+  with_indexed_items: "{{ containers.value }}"
+  loop_control:
+    loop_var: container
+
+- name: Set settings
+  shell: "docker exec {{ container.1 }} bash -c 'cat /tmp/docker.hosts >> /etc/hosts && echo \"%{{ sudo_user }} ALL=(ALL) NOPASSWD: ALL\" > /etc/sudoers.d/{{ sudo_user }}'"
+  when: check_container_settings.results[container.0].rc != 0
+  with_indexed_items: "{{ containers.value }}"
+  loop_control:
+    loop_var: container

@@ -1,0 +1,52 @@
+- name: Check hosts.ini on distsyslab repo in client servers
+  shell: "docker exec {{ container }} bash -c 'test -e /home/{{ sudo_user }}/distsyslab/hosts.ini'"
+  register: check_hosts_inis
+  with_items: "{{ distsys_types[distsys_type].container.client }}"
+  loop_control:
+    loop_var: container
+  changed_when: False
+  failed_when: False
+
+- name: Aggregate absolute return codes
+  set_fact:
+    check_hosts_ini={{ check_hosts_inis.results | map(attribute="rc") | map("abs") | list | max }}
+  changed_when: False
+
+- name: Install develop environment in client servers
+  shell: "docker exec {{ container.1 }} bash -c 'yum -y install vim less ansible git zsh which && chsh -s $(which zsh) {{ sudo_user }} && chsh -s $(which zsh) {{ user }}'"
+  when: check_hosts_inis.results[container.0].rc != 0
+  with_indexed_items: "{{ distsys_types[distsys_type].container.client }}"
+  loop_control:
+    loop_var: container
+
+- name: Get a current commit hash in distsyslab
+  shell: git rev-parse HEAD
+  register: ret_commit_hash
+  when: check_hosts_ini | int != 0
+
+- name: Git clone distsyslab repo in client servers
+  shell: "docker exec -u {{ sudo_user }} {{ container.1 }} bash -c 'cd /home/{{ sudo_user }} && git clone {{ distsyslab_git_repo }} -o upstream -b {{ distsyslab_branch }} && cd /home/{{ sudo_user }}/distsyslab && git reset --hard {{ ret_commit_hash.stdout }}'"
+  when: check_hosts_inis.results[container.0].rc != 0
+  with_indexed_items: "{{ distsys_types[distsys_type].container.client }}"
+  loop_control:
+    loop_var: container
+
+- name: Initialize hosts.ini
+  file:
+    path: tmp/hosts.ini
+    state: absent
+  when: check_hosts_ini | int != 0
+
+- name: Write hosts.ini
+  shell: "echo \"[{{ group.key }}]\\n{{ group.value | join('\\n') }}\\n\" >> tmp/hosts.ini"
+  with_dict: "{{ distsys_types[distsys_type].group }}"
+  loop_control:
+    loop_var: group
+  when: check_hosts_ini | int != 0
+
+- name: Copy hosts.ini to client servers
+  shell: "docker cp tmp/hosts.ini {{ container.1 }}:/home/{{ sudo_user }}/distsyslab/hosts.ini"
+  when: check_hosts_inis.results[container.0].rc != 0
+  with_indexed_items: "{{ distsys_types[distsys_type].container.client }}"
+  loop_control:
+    loop_var: container

@@ -1,27 +1,35 @@
 - name: Check docker
-  stat: /var/run/docker.sock
+  stat: path=/var/run/docker.sock
   register: stat_docker
+  become: yes
 
 - name: Install docker
   include_tasks: docker.ubuntu.yml
   when:
-    - stat_docker.stat.exists
+    - not stat_docker.stat.exists
     - ansible_distribution == 'Ubuntu'
 
 - name: Install docker
   include_tasks: docker.centos.yml
   when:
-    - stat_docker.stat.exists
+    - not stat_docker.stat.exists
     - ansible_distribution == 'CentOS'
+
+- name: Check nvidia docker plugin
+  stat: path=/etc/docker/daemon.json
+  register: stat_nvidia_plugin
+  become: yes
 
 - name: Install nvidia-docker
   include_tasks: nvidia_docker_plugin.ubuntu.yml
   when:
     - enable_nvidia_gpu
     - ansible_distribution == 'Ubuntu'
+    - not stat_nvidia_plugin.stat.exists
 
 - name: Install nvidia-docker
   include_tasks: nvidia_docker_plugin.centos.yml
   when:
     - enable_nvidia_gpu
     - ansible_distribution == 'CentOS'
+    - not stat_nvidia_plugin.stat.exists

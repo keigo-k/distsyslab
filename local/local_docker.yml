@@ -1,0 +1,12 @@
+---
+
+- hosts: local
+  connection: local
+  gather_facts: yes
+  vars_files:
+    - "../group_vars/all.yml"
+  roles:
+    - { role: docker, tags: docker }
+    - { role: docker_bridge, tags: docker_bridge }
+    - { role: docker_container, tags: docker_container }
+    - { role: docker_client, tags: docker_client }

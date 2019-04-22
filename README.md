@@ -1,6 +1,5 @@
 # Distributed System Lab
 
-
 # Usage
 ## Install Ansible
 ### Ubuntu
@@ -17,8 +16,6 @@ $ sudo apt-get install ansible
 
 ### CentOS
 
-
-
 ```
 $ sudo yum install ansible
 ```
@@ -28,11 +25,13 @@ $ sudo yum install ansible
 If you want to run Kubernetes on Docker in localhost, execute the below command.
 
 ```
-$ ansible-playbook install_docker.yml
+$ cd local
+$ ansible-playbook local_docker.yml
 ```
 
-If you don't need a gpu node in kubernetes, you should execute the above command with "".
+If you don't need a gpu node in kubernetes, you should execute the above command with -e "enable_nvidia_gpu=false".
 
 ```
-$ ansible-playbook -e "enable_nvidia_gpu=no" install_docker.yml
+$ cd local
+$ ansible-playbook -e "enable_nvidia_gpu=false" local_docker.yml
 ```

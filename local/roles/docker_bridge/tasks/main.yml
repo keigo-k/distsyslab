@@ -1,0 +1,9 @@
+- name: Check user-defined bridge
+  shell: docker network ls | grep distsyslab_net
+  register: ret_docker_network
+  changed_when: False
+  failed_when: ret_docker_network.rc not in [0, 1]
+
+- name: Create user-defined bridge
+  shell: "docker network create {{ docker_bridge_name }}"
+  when: ret_docker_network.rc == 1

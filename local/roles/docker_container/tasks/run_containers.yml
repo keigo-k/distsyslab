@@ -1,0 +1,28 @@
+- name: Check container
+  shell: "docker ps | grep {{ container }}"
+  with_items: "{{ containers.value }}"
+  loop_control:
+    loop_var: container
+  register: check_containers
+  changed_when: False
+  failed_when: False
+
+- name: Run container
+  shell: "docker run -d --privileged --name {{ container.1 }} -v {{ docker_sock }}:{{ docker_sock }} --network {{ docker_bridge_name }} {{ docker_image }}-base"
+  when:
+    - check_containers.results[container.0].rc != 0
+    - not enable_nvidia_gpu or containers.key != "worker" or ("datanode" in distsys_types[distsys_type].group and container.1 in distsys_types[distsys_type].group.datanode)
+  with_indexed_items: "{{ containers.value }}"
+  loop_control:
+    loop_var: container
+
+- name: Run cuda container
+  shell: "docker run --runtime=nvidia -d --privileged --name {{ container.1 }} -v {{ docker_sock }}:{{ docker_sock }} --network {{ docker_bridge_name }} {{ docker_cuda_image }}-base"
+  when:
+    - check_containers.results[container.0].rc != 0
+    - enable_nvidia_gpu == True
+    - containers.key == "worker"
+    - not ("datanode" in distsys_types[distsys_type].group) or not (container.1 in distsys_types[distsys_type].group.datanode)
+  with_indexed_items: "{{ containers.value }}"
+  loop_control:
+    loop_var: container

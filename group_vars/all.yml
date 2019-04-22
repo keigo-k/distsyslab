@@ -1,1 +1,8 @@
-enable_nvidia_gpu: yes
+enable_nvidia_gpu: true
+
+user: distsys
+sudo_user: distsysadmin
+
+docker_version: 18.06.1
+nvidia_docker2_version: 2.0.3+docker18.06.1
+nvidia_container_runtime_version: 2.0.0+docker18.06.1

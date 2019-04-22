@@ -1,0 +1,22 @@
+- name: Get linux distribution
+  shell: ". /etc/os-release && echo $ID$VERSION_ID"
+  register: ret_dist
+  changed_when: False
+
+- name: Add nvidia docker yum repository
+  get_url:
+    url="https://nvidia.github.io/nvidia-docker/{{ ret_dist.stdout }}/nvidia-docker.repo"
+    dest=/etc/yum.repos.d/nvidia-docker.repo
+  become: yes
+
+- name: Install nvidia docker2
+  yum:
+    name:
+      - "nvidia-docker2-{{ nvidia_docker2_version }}-*"
+      - "nvidia-container-runtime-{{ nvidia_container_runtime_version }}-*"
+    update_cache: yes
+  become: yes
+
+- name: SIGHUP dockerd
+  raw: pkill -SIGHUP dockerd
+  become: yes

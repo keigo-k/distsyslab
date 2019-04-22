@@ -1,0 +1,59 @@
+- name: Check a base image
+  shell: "docker images | grep {{ docker_cuda_image }}-base"
+  register: check_image
+  changed_when: False
+  failed_when: False
+
+- name: Build a base image
+  shell: "docker build --build-arg IMAGE_TAG={{ docker_image }} -t {{ docker_image }}-base -f {{ playbook_dir }}/dockerfiles/centos-base.dockerfile ."
+  when: check_image.rc != 0
+
+- name: Check a cuda base image
+  shell: "docker images | grep {{ docker_cuda_image }}-base"
+  register: check_cuda_image
+  changed_when: False
+  failed_when: False
+
+- name: Build a cuda base image
+  shell: "docker build --build-arg IMAGE_TAG={{ docker_cuda_image }} -t {{ docker_cuda_image }}-base -f {{ playbook_dir }}/dockerfiles/centos-cuda-base.dockerfile ."
+  when: check_image.rc != 0
+
+- name: Run containers
+  include: run_containers.yml
+  with_dict: "{{ distsys_types[distsys_type].container }}"
+  loop_control:
+    loop_var: containers
+
+- name: Make tmp directory
+  file:
+    dest: tmp
+    state: directory
+    mode: 0755
+
+- name: Check docker hosts
+  stat: path=tmp/docker.hosts
+  register: stat_hosts
+
+- name: Create docker hosts
+  shell: "docker network inspect -f '{{ '{{range .Containers}}{{.IPv4Address}} {{.Name}}:{{end}}' }}' {{ docker_bridge_name }}|sed -e 's/\\/[0-9]\\+ / /g'|sed -e 's/:/\\n/g'|sort|grep -v ^$ > tmp/docker.hosts"
+  when: not stat_hosts.stat.exists
+
+- name: Make tmp/.ssh directory
+  file:
+    dest: tmp/.ssh
+    state: directory
+    mode: 0700
+
+- name: Check key
+  stat: path=tmp/.ssh/id_rsa
+  register: stat_key
+
+- name: Create key
+  shell: ssh-keygen -t rsa -b 2048 -N '' -f tmp/.ssh/id_rsa && cat tmp/.ssh/id_rsa.pub >> tmp/.ssh/authorized_keys && echo "host *\n    StrictHostKeyChecking no\n    UserKnownHostsFile=/dev/null" > tmp/.ssh/config
+  when: not stat_key.stat.exists
+
+- name: Set up containers
+  include: set_up_containers.yml
+  with_dict: "{{ distsys_types[distsys_type].container }}"
+  loop_control:
+    loop_var: containers

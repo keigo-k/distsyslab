@@ -1,0 +1,79 @@
+distsyslab_git_repo: https://github.com/keigo-k/distsyslab.git
+distsyslab_branch: master
+
+docker_sock: /var/run/docker.sock
+
+docker_bridge_name: distsyslab_net
+
+docker_image: centos7.4.1708
+docker_cuda_image: 10.1-cudnn7-devel-centos7
+
+distsys_type: kubehadoop
+distsys_types:
+  kubehadoop:
+    container:
+      client:
+        - client001
+      master:
+        - master001
+        - master002
+        - master003
+      worker:
+        - worker001
+        - worker002
+        - worker003
+        - worker004
+    group:
+      client: [client001]
+      namenode: [master001, master002]
+      journalnode: [master001, master002, master003]
+      zookeeper: [master001, master002, master003]
+      kubemaster: [master001, master003]
+      etcd: [master001, master002, master003]
+      datanode: [worker001, worker002]
+      kubenode: [worker003, worker004]
+  mesoshadoop:
+    container:
+      client:
+        - client001
+      master:
+        - master001
+        - master002
+        - master003
+      worker:
+        - worker001
+        - worker002
+        - worker003
+        - worker004
+    group:
+      client: [client001]
+      namenode: [master001, master002]
+      journalnode: [master001, master002, master003]
+      zookeeper: [master001, master002, master003]
+      mesosmaster: [master001, master003]
+      datanode: [worker001, worker002]
+      mesosagent: [worker003, worker004]
+  full:
+    container:
+      client:
+        - client001
+      master:
+        - master001
+        - master002
+        - master003
+      worker:
+        - worker001
+        - worker002
+        - worker003
+        - worker004
+    group:
+      client: [client001]
+      namenode: [master001, master002]
+      journalnode: [master001, master002, master003]
+      zookeeper: [master001, master002, master003]
+      kubemaster: [master001, master003]
+      etcd: [master001, master002, master003]
+      mesosmaster: [master002, master003]
+      datanode: [worker001, worker002]
+      kubenode: [worker003, worker004]
+      mesosagent: [worker003, worker004]
