@@ -28,10 +28,10 @@ distsys_types:
       namenode: [master001, master002]
       journalnode: [master001, master002, master003]
       zookeeper: [master001, master002, master003]
-      kubemaster: [master001, master003]
+      kube-master: [master001, master003]
       etcd: [master001, master002, master003]
       datanode: [worker001, worker002]
-      kubenode: [worker003, worker004]
+      kube-node: [worker003, worker004]
   mesoshadoop:
     container:
       client:
@@ -71,9 +71,9 @@ distsys_types:
       namenode: [master001, master002]
       journalnode: [master001, master002, master003]
       zookeeper: [master001, master002, master003]
-      kubemaster: [master001, master003]
+      kube-master: [master001, master003]
       etcd: [master001, master002, master003]
       mesosmaster: [master002, master003]
       datanode: [worker001, worker002]
-      kubenode: [worker003, worker004]
+      kube-node: [worker003, worker004]
       mesosagent: [worker003, worker004]

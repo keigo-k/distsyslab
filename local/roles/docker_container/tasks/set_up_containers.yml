@@ -22,7 +22,7 @@
     loop_var: container
 
 - name: Set settings
-  shell: "docker exec {{ container.1 }} bash -c 'cat /tmp/docker.hosts >> /etc/hosts && echo \"%{{ sudo_user }} ALL=(ALL) NOPASSWD: ALL\" > /etc/sudoers.d/{{ sudo_user }}'"
+  shell: "docker exec {{ container.1 }} bash -c 'cat /tmp/docker.hosts >> /etc/hosts && echo \"%{{ sudo_user }} ALL=(ALL) NOPASSWD: ALL\" > /etc/sudoers.d/{{ sudo_user }} && ln -s /var/opt/docker.sock /var/run/docker.sock && echo \"ln -s /var/opt/docker.sock /var/run/docker.sock\" >> /etc/rc.d/rc.local && hostname {{ container.1 }}'"
   when: check_container_settings.results[container.0].rc != 0
   with_indexed_items: "{{ containers.value }}"
   loop_control:

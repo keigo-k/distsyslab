@@ -1,0 +1,80 @@
+- name: Set ip forwarding kernel parameter
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+    state: present
+    reload: yes
+
+- name: Check br_netfilter module
+  shell: modinfo br_netfilter
+  register: ret_br_netfilter
+  failed_when: ret_br_netfilter.rc not in [0, 1]
+  changed_when: false
+
+- name: Enable br_netfilter module
+  modprobe:
+    name: br_netfilter
+    state: present
+  when: ret_br_netfilter.rc == 0
+
+- name: Persist br_netfilter module
+  copy:
+    dest: /etc/modules-load.d/distsyslab-br_netfilter.conf
+    content: br_netfilter
+  when: ret_br_netfilter.rc == 0
+
+- name: Check bridge-nf-call-iptables
+  command: sysctl net.bridge.bridge-nf-call-iptables
+  failed_when: false
+  changed_when: false
+  register: ret_bridge_nf_call_iptables
+
+- name: Enable bridge-nf-call-iptables
+  sysctl:
+    name: "{{ item }}"
+    state: present
+    value: 1
+    reload: yes
+  when: ret_bridge_nf_call_iptables.rc == 0
+  with_items:
+    - net.bridge.bridge-nf-call-iptables
+    - net.bridge.bridge-nf-call-arptables
+    - net.bridge.bridge-nf-call-ip6tables
+
+- name: Modprode ipvs
+  modprobe:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - ip_vs
+    - ip_vs_rr
+    - ip_vs_wrr
+    - ip_vs_sh
+
+- name: Modprobe nf_conntrack_ipv4
+  modprobe:
+    name: nf_conntrack_ipv4
+    state: present
+  register: ret_nf_conntrack
+  failed_when: false
+  changed_when: false
+
+- name: Modprobe nf_conntrack
+  modprobe:
+    name: nf_conntrack
+    state: present
+  when: ret_nf_conntrack is failed
+
+- name: Persist ipvs
+  copy:
+    dest: /etc/modules-load.d/distsyslab-ipvs.conf
+    content: |
+      ip_vs
+      ip_vs_rr
+      ip_vs_wrr
+      ip_vs_sh
+      {% if ret_nf_conntrack is failed -%}
+      nf_conntrack
+      {%-   else -%}
+      nf_conntrack_ipv4
+      {%-   endif -%}

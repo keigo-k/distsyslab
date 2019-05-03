@@ -8,7 +8,7 @@
   failed_when: False
 
 - name: Run container
-  shell: "docker run -d --privileged --name {{ container.1 }} -v {{ docker_sock }}:{{ docker_sock }} --network {{ docker_bridge_name }} {{ docker_image }}-base"
+  shell: "docker run -d --privileged --name {{ container.1 }} -v {{ docker_sock }}:/var/opt/docker.sock --network {{ docker_bridge_name }} {{ docker_image }}-base"
   when:
     - check_containers.results[container.0].rc != 0
     - not enable_nvidia_gpu or containers.key != "worker" or ("datanode" in distsys_types[distsys_type].group and container.1 in distsys_types[distsys_type].group.datanode)
@@ -17,7 +17,7 @@
     loop_var: container
 
 - name: Run cuda container
-  shell: "docker run --runtime=nvidia -d --privileged --name {{ container.1 }} -v {{ docker_sock }}:{{ docker_sock }} --network {{ docker_bridge_name }} {{ docker_cuda_image }}-base"
+  shell: "docker run --runtime=nvidia -d --privileged --name {{ container.1 }} -v {{ docker_sock }}:/var/opt/docker.sock --network {{ docker_bridge_name }} {{ docker_cuda_image }}-base"
   when:
     - check_containers.results[container.0].rc != 0
     - enable_nvidia_gpu == True

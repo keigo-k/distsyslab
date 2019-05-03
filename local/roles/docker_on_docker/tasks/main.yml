@@ -1,0 +1,12 @@
+- name: Get docker group id in localhost
+  shell: bash -c 'getent group docker | cut -d":" -f3'
+  register: ret_docker_gid
+  changed_when: False
+
+- name: Set up docker
+  vars:
+    docker_gid: "{{ ret_docker_gid.stdout }}"
+  include: set_up_docker.yml
+  with_dict: "{{ distsys_types[distsys_type].container }}"
+  loop_control:
+    loop_var: containers

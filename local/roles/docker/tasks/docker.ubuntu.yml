@@ -7,18 +7,15 @@
       - gnupg-agent
       - software-properties-common
     update_cache: yes
-  become: yes
 
 - name: Add docker dependencies apt repository
   apt_repository:
     filename: ubuntu-sdk-team
     repo: ppa:ubuntu-sdk-team/ppa
-  become: yes
 
 - name: Add docker gpg key
   apt_key:
     url: https://download.docker.com/linux/ubuntu/gpg
-  become: yes
 
 - name: Get lsb info
   raw: lsb_release -cs
@@ -29,7 +26,6 @@
   apt_repository:
     filename: docker
     repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ret_lsb.stdout }} stable"
-  become: yes
 
 - name: Install docker ce
   apt:
@@ -37,11 +33,9 @@
       - "docker-ce={{ docker_version }}~*"
       - containerd.io
     update_cache: yes
-  become: yes
 
 - name: Add user to docker group
   user:
     name="{{ ansible_user | default(lookup('env', 'USER'), True) }}"
     group=docker
     append=yes
-  become: yes

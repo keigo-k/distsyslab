@@ -14,11 +14,12 @@ RUN (cd /lib/systemd/system/sysinit.target.wants/ && for i in *; do [ $i == \
 
 RUN yum check \
     && yum -y update \
-    && yum -y install sudo openssh-server openssh-clients
+    && yum -y install sudo openssh-server openssh-clients iproute iptables-services ethtool
 
 RUN sed -i 's;PermitRootLogin prohibit-password;PermitRootLogin no;' /etc/ssh/sshd_config \
     && sed -i 's;#PasswordAuthentication yes;PasswordAuthentication no;' /etc/ssh/sshd_config \
-    && chmod 4755 /bin/ping
+    && chmod 4755 /bin/ping \
+    && chmod 744 /etc/rc.d/rc.local
 
 VOLUME [ "/sys/fs/cgroup" ]
 CMD ["/usr/sbin/init"]

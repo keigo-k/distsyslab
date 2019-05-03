@@ -13,7 +13,7 @@
   changed_when: False
 
 - name: Install develop environment in client servers
-  shell: "docker exec {{ container.1 }} bash -c 'yum -y install vim less ansible git zsh which && chsh -s $(which zsh) {{ sudo_user }} && chsh -s $(which zsh) {{ user }}'"
+  shell: "docker exec {{ container.1 }} bash -c 'yum -y install epel-release vim less ansible git zsh which && yum -y install python-pip && chsh -s $(which zsh) {{ sudo_user }} && chsh -s $(which zsh) {{ user }}'"
   when: check_hosts_inis.results[container.0].rc != 0
   with_indexed_items: "{{ distsys_types[distsys_type].container.client }}"
   loop_control:
@@ -25,23 +25,25 @@
   when: check_hosts_ini | int != 0
 
 - name: Git clone distsyslab repo in client servers
-  shell: "docker exec -u {{ sudo_user }} {{ container.1 }} bash -c 'cd /home/{{ sudo_user }} && git clone {{ distsyslab_git_repo }} -o upstream -b {{ distsyslab_branch }} && cd /home/{{ sudo_user }}/distsyslab && git reset --hard {{ ret_commit_hash.stdout }}'"
+  shell: "docker exec -u {{ sudo_user }} -w /home/{{ sudo_user }} {{ container.1 }} bash -c 'git clone {{ distsyslab_git_repo }} -o upstream -b {{ distsyslab_branch }} && cd distsyslab && git reset --hard {{ ret_commit_hash.stdout }} && git submodule update --init && sudo pip install -r 3d/kubespray/requirements.txt'"
   when: check_hosts_inis.results[container.0].rc != 0
   with_indexed_items: "{{ distsys_types[distsys_type].container.client }}"
   loop_control:
     loop_var: container
 
-- name: Initialize hosts.ini
-  file:
-    path: tmp/hosts.ini
-    state: absent
+- name: Write all group in hosts.ini
+  shell: echo "[all]" > tmp/hosts.ini && cat tmp/docker.hosts|sed -e 's/^\([0-9.]\+\) \(.\+\)/\2 ansible_host=\1 ip=\1 is_docker=true/'|sed -e 's/^\(master\([0-9]\+\).\+\)$/\1 etcd_member_name=etcd\2/' >> tmp/hosts.ini
   when: check_hosts_ini | int != 0
 
-- name: Write hosts.ini
-  shell: "echo \"[{{ group.key }}]\\n{{ group.value | join('\\n') }}\\n\" >> tmp/hosts.ini"
+- name: Write other groups in hosts.ini
+  shell: "echo \"\\n[{{ group.key }}]\\n{{ group.value | join('\\n') }}\" >> tmp/hosts.ini"
   with_dict: "{{ distsys_types[distsys_type].group }}"
   loop_control:
     loop_var: group
+  when: check_hosts_ini | int != 0
+
+- name: Write parent groups in hosts.ini
+  shell: "echo \"\\n[k8s-cluster:children]\\nkube-master\\nkube-node\\n\\n[kubespray:children]\\nk8s-cluster\" >> tmp/hosts.ini"
   when: check_hosts_ini | int != 0
 
 - name: Copy hosts.ini to client servers

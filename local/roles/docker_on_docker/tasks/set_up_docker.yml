@@ -1,0 +1,22 @@
+- name: Check docker group setting
+  shell: "docker exec {{ container }} bash -c 'id {{ user }} | grep {{ docker_gid }} >& /dev/null'"
+  with_items: "{{ containers.value }}"
+  loop_control:
+    loop_var: container
+  register: check_docker_settings
+  changed_when: False
+  failed_when: False
+
+- name: Install docker
+  shell: "docker exec {{ container.1 }} bash -c 'curl -fsSLO https://download.docker.com/linux/static/stable/x86_64/docker-{{ docker_version }}-ce.tgz && tar xzvf docker-{{ docker_version }}-ce.tgz --strip 1 -C /usr/bin docker/docker && rm docker-{{ docker_version }}-ce.tgz'"
+  when: check_docker_settings.results[container.0].rc != 0
+  with_indexed_items: "{{ containers.value }}"
+  loop_control:
+    loop_var: container
+
+- name: Add docker gid and add users to docker group
+  shell: "docker exec {{ container.1 }} bash -c 'groupadd -o -g {{ docker_gid }} docker && usermod -aG docker {{ sudo_user }} && usermod -aG docker {{ user }}'"
+  when: check_docker_settings.results[container.0].rc != 0
+  with_indexed_items: "{{ containers.value }}"
+  loop_control:
+    loop_var: container

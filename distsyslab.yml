@@ -1,0 +1,6 @@
+- name: Install kubernetes with kubespray
+  vars:
+    override_system_hostname: "{{ is_docker is not defined or not is_docker }}"
+    populate_inventory_to_hosts_file: "{{ is_docker is not defined or not is_docker }}"
+    deploy_container_engine: "{{ is_docker is not defined or not is_docker }}"
+  include: 3d/kubespray/cluster.yml

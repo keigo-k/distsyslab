@@ -1,7 +1,6 @@
 - name: Check docker
   stat: path=/var/run/docker.sock
   register: stat_docker
-  become: yes
 
 - name: Install docker
   include_tasks: docker.ubuntu.yml
@@ -18,7 +17,6 @@
 - name: Check nvidia docker plugin
   stat: path=/etc/docker/daemon.json
   register: stat_nvidia_plugin
-  become: yes
 
 - name: Install nvidia-docker
   include_tasks: nvidia_docker_plugin.ubuntu.yml
@@ -33,3 +31,20 @@
     - enable_nvidia_gpu
     - ansible_distribution == 'CentOS'
     - not stat_nvidia_plugin.stat.exists
+
+- name: Check docker daemon.json
+  shell: grep native.cgroupdriver=systemd /etc/docker/daemon.json
+  register: ret_cgroupdriver
+  failed_when: False
+  changed_when: False
+
+- name: Replace docker daemon.json
+  lineinfile: >-
+    dest='/etc/docker/daemon.json'
+    state=present
+    backrefs=yes
+    regexp='^{'
+    line="{\n    \"exec-opts\": [\"native.cgroupdriver=systemd\"],\n"
+  when: ret_cgroupdriver.rc != 0
+  notify:
+    - restart docker

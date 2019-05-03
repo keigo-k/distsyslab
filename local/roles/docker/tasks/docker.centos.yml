@@ -5,14 +5,12 @@
       - device-mapper-persistent-data
       - lvm2
     update_cache: yes
-  become: yes
 
 - name: Add docker yum repository
   shell: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
   args:
     chdir: /etc/yum.repos.d
     creates: docker-ce.repo
-  become: yes
 
 - name: Install docker ce
   yum:
@@ -20,14 +18,12 @@
       - "docker-ce-{{ docker_version }}.*"
       - containerd.io
     update_cache: yes
-  become: yes
 
 - name: Add user to docker group
   user:
     name="{{ ansible_user | default(lookup('env', 'USER'), True) }}"
     group=docker
     append=yes
-  become: yes
 
 - name: restart docker
   systemd:
@@ -35,4 +31,3 @@
     state: restarted
     daemon_reload: yes
     enabled: yes
-  become: yes
