@@ -26,3 +26,12 @@
   with_indexed_items: "{{ containers.value }}"
   loop_control:
     loop_var: container
+
+- name: Check docker hosts
+  set_fact:
+    check_container={{ check_containers.results | map(attribute="rc") | map("abs") | list | max }}
+  changed_when: False
+
+- name: Create docker hosts
+  shell: "docker network inspect -f '{{ '{{range .Containers}}{{.IPv4Address}} {{.Name}}:{{end}}' }}' {{ docker_bridge_name }}|sed -e 's/\\/[0-9]\\+ / /g'|sed -e 's/:/\\n/g'|sort|grep -v ^$ > tmp/docker.hosts"
+  when: check_container | int != 0

@@ -17,7 +17,7 @@ RUN yum check \
     && yum -y install sudo openssh-server openssh-clients iproute iptables-services ethtool
 
 RUN sed -i 's;PermitRootLogin prohibit-password;PermitRootLogin no;' /etc/ssh/sshd_config \
-    && sed -i 's;#PasswordAuthentication yes;PasswordAuthentication no;' /etc/ssh/sshd_config \
+    && sed -i 's;PasswordAuthentication yes;PasswordAuthentication no;' /etc/ssh/sshd_config \
     && chmod 4755 /bin/ping \
     && chmod 744 /etc/rc.d/rc.local
 

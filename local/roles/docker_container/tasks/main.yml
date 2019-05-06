@@ -18,25 +18,17 @@
   shell: "docker build --build-arg IMAGE_TAG={{ docker_cuda_image }} -t {{ docker_cuda_image }}-base -f {{ playbook_dir }}/dockerfiles/centos-cuda-base.dockerfile ."
   when: check_image.rc != 0
 
-- name: Run containers
-  include: run_containers.yml
-  with_dict: "{{ distsys_types[distsys_type].container }}"
-  loop_control:
-    loop_var: containers
-
 - name: Make tmp directory
   file:
     dest: tmp
     state: directory
     mode: 0755
 
-- name: Check docker hosts
-  stat: path=tmp/docker.hosts
-  register: stat_hosts
-
-- name: Create docker hosts
-  shell: "docker network inspect -f '{{ '{{range .Containers}}{{.IPv4Address}} {{.Name}}:{{end}}' }}' {{ docker_bridge_name }}|sed -e 's/\\/[0-9]\\+ / /g'|sed -e 's/:/\\n/g'|sort|grep -v ^$ > tmp/docker.hosts"
-  when: not stat_hosts.stat.exists
+- name: Run containers
+  include: run_containers.yml
+  with_dict: "{{ distsys_types[distsys_type].container }}"
+  loop_control:
+    loop_var: containers
 
 - name: Make tmp/.ssh directory
   file:
